@@ -9,8 +9,7 @@ Data:
 These publicly available implementations and open data for the experiments are sincerely appreciated.
 
 Installation:
-Please unzip the pretrained weights, and run 'pip -r install requirements.txt' with Python 3.10.
-Or, you can download the pretrained weights from the list below:
+Please download the pretrained weights from the list below, and run 'pip -r install requirements.txt' with Python 3.10.
 
 | Weight        | Recommendation  | Description | Fur-PT Ready | AS2M mAP |
 |:--------------|:----------------|:------------|:------:|:--------:|
