@@ -49,11 +49,11 @@ python visualize.py
 ```
 
 - `data_dir`: type=str,default='./source_datasets/', 'directory of the original data.'  
-- `graph_dir`,type=str,default='./graph/', 'directory of graphs.'
+- `graph_dir`,type=str,default='./graph/', 'directory of graphs'
 - `event_dir`,type=str,default='./event/', 'directory of outputs for AEC task.'
 - `env_dir`,type=str,default='./env/', 'directory of outputs for ASC task.'
 - `log_dir`,type=str,default='./log/', 'directory of the transaction logs.'
 
 ## References
-- "[Masked Modeling Duo: Towards a Universal Audio Pre-training Framework](https://ieeexplore.ieee.org/document/10502167)"
-- "[MPNet: Masked and Permuted Pre-training for Language Understanding](https://arxiv.org/pdf/2004.09297)"
+- M2D: "[Masked Modeling Duo: Towards a Universal Audio Pre-training Framework](https://ieeexplore.ieee.org/document/10502167)"
+- MPNet: "[MPNet: Masked and Permuted Pre-training for Language Understanding](https://arxiv.org/pdf/2004.09297)"
