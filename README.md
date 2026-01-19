@@ -14,11 +14,15 @@ Or, you can download the pretrained weights from the list below:
 
 | Weight        | Recommendation  | Description | Fur-PT Ready | AS2M mAP |
 |:--------------|:----------------|:------------|:------:|:--------:|
+| [m2d_clap_vit_base-80x1001p16x16-240128_AS-FT_enconly](https://github.com/nttcslab/m2d/releases/download/v0.3.0/m2d_clap_vit_base-80x1001p16x16-240128_AS-FT_enconly.zip) | Recommended for this implementation | M2D-CLAP fine-tuned on AS2M | N/A | 0.485 |
+| [m2d_as_vit_base-80x1001p16x16-240213_AS-FT_enconly](https://github.com/nttcslab/m2d/releases/download/v0.3.0/m2d_as_vit_base-80x1001p16x16-240213_AS-FT_enconly.zip) | Recommended for this implementation | M2D-AS fine-tuned on AS2M | N/A | 0.485 |
 | [m2d_vit_base-80x1001p16x16-221006-mr7_as_46ab246d](https://github.com/nttcslab/m2d/releases/download/v0.3.0/m2d_vit_base-80x1001p16x16-221006-mr7_as_46ab246d.zip) | 3rd best for AT/SED. (Encoder only) | M2D/0.7 fine-tuned on AS2M | N/A | 0.479 |
 | [m2d_vit_base-80x200p16x4-230529](https://github.com/nttcslab/m2d/releases/download/v0.1.0/m2d_vit_base-80x200p16x4-230529.zip) | General-purpose transfer learning and further pre-training w/ finer time frame. | M2D/0.7 (t.f. 40ms) | ✅ | - |
 | [m2d_clap_vit_base-80x608p16x16-240128](https://github.com/nttcslab/m2d/releases/download/v0.1.0/m2d_clap_vit_base-80x608p16x16-240128.zip) | General-purpose transfer learning and further pre-training, especially when application data is closer to the AudioSet ontology. | M2D-CLAP | ✅ | - |
 | [m2d_as_vit_base-80x608p16x16-240213](https://github.com/nttcslab/m2d/releases/download/v0.1.0/m2d_as_vit_base-80x608p16x16-240213.zip) | General-purpose transfer learning and further pre-training, especially when application data is closer to the AudioSet ontology. | M2D-AS | ✅ | - |
+| [m2d_vit_base-80x608p16x16-221006-mr7](https://github.com/nttcslab/m2d/releases/download/v0.1.0/m2d_vit_base-80x608p16x16-221006-mr7.zip) | Recommended for the visual analysis in this implementation. | M2D/0.7 | ✅ | - |
 | [m2d_vit_base-80x608p16x16-221006-mr6](https://github.com/nttcslab/m2d/releases/download/v0.1.0/m2d_vit_base-80x608p16x16-221006-mr6.zip) | General-purpose transfer learning and further pre-training. | M2D/0.6 | ✅ | - |
+| [m2d_vit_base-80x608p16x16-221006-mr7_enconly](https://github.com/nttcslab/m2d/releases/download/v0.1.0/m2d_vit_base-80x608p16x16-221006-mr7_enconly.zip) | General-purpose transfer learning. (Encoder only) | M2D/0.7 | N/A | - |
 | [m2d_vit_base-80x608p16x16-220930-mr7_enconly](https://github.com/nttcslab/m2d/releases/download/v0.1.0/m2d_vit_base-80x608p16x16-220930-mr7_enconly.zip) | General-purpose transfer learning. (Encoder only) | M2D/0.7 | N/A | - |
 
 
