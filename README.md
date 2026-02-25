@@ -33,13 +33,13 @@ python ./sound_datasets/rare_sound_event/meta/yaml2csv.py
 
 To generate results of AEC task :
 ```shell
-python generate_labels_event.py 
+python run.py 
 ```
 or
 
 To generate results of ASC task :
 ```shell
-python generate_labels_env.py 
+python run.py --classification_type environment
 ```
 
 For visualization:
@@ -49,9 +49,10 @@ python visualize.py
 
 - `data_dir`: type=str,default='./source_datasets/', 'directory of the original data.'  
 - `graph_dir`,type=str,default='./graph/', 'directory of graphs'
-- `event_dir`,type=str,default='./event/', 'directory of outputs for AEC task.'
-- `env_dir`,type=str,default='./env/', 'directory of outputs for ASC task.'
+- `output_dir`,type=str,default='./event/', 'directory of outputs for AEC or ASC task.'
 - `log_dir`,type=str,default='./log/', 'directory of the transaction logs.'
+- `noise_factor`,type=float,default=0, 'noise to be added to original files for experiments.'
+- `classification_type`,type=str,default='event', help = 'three options: event, environment, or both.'
 
 ## References
 - M2D: "[Masked Modeling Duo: Towards a Universal Audio Pre-training Framework](https://ieeexplore.ieee.org/document/10502167)"
