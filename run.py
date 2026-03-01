@@ -71,9 +71,10 @@ if __name__=="__main__":
 
     meta_path = "./sound_datasets/rare_sound_event/meta"
 
-    model_event_name = 'all-mpnet-base-v2'
-    model_environment_name = 'all-mpnet-base-v2'
+    model_event_name = 'stsb-roberta-large'
+    model_environment_name = 'stsb-roberta-large'
     #model_event = SentenceTransformer('stsb-roberta-large')
+    #model_event = SentenceTransformer('all-mpnet-base-v2')
     model_event = SentenceTransformer(model_event_name)
     #model_similarity = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
     #model_similarity = SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
@@ -113,11 +114,12 @@ if __name__=="__main__":
 
     df_envnt = df_envnt.sort_values(by='wav_name',ascending=True)
     df_envnt = df_envnt.reset_index()
+
     matrix_total=pd.DataFrame()
     actual_event_total=np.array([])
     predict_event_total=np.array([])
     wav_name_total = np.array([])
-    files_per_batch = 2
+    files_per_batch = 4
     for i in range(1):
         #random_int = random.randrange(0,489)
         random_int = 0
@@ -133,8 +135,10 @@ if __name__=="__main__":
         for j in range(len(df_envnt)):   
             for fn in files:
                 fn_ = str(fn).split('\\')[-1]
+                for target_event in event_list:
+                    if target_event in fn_:
+                        event = target_event
                 if fn_ == df_envnt['wav_name'][j]:
-                    event = df_envnt['event_actual'][j]
                     min_duration,duration,target_sr = utils.computeDuration(classification_type,df_meta,event)
                     top_classes, top_values, secs, sub_representation=tagging.show_topk_sliding_window(classes,duration,min_duration,target_sr,model, fn,opt)
                     df_representation = pd.concat([df_representation,sub_representation],axis=0,ignore_index=True )
@@ -148,45 +152,67 @@ if __name__=="__main__":
         #df_representation = infer.env_sounds(envnt_list,wav_list,df_representation,model_environment)
         if classification_type=='event':
             df_representation = infer.event_sounds(event_list,df_representation,model_event)
-            df_representation.to_csv(event_dir+model_event_name+'_representation_result_'+str(i)+'_noisefactor_'+str(noise_factor)+'.csv')
-            try:
-                matrix, actual_event,predict_event,wav_name_array= evaluation.evaluationMatrix(df_representation,classification_type,event,random_int,opt)
-                matrix_total=pd.concat([matrix_total,matrix],axis=0)
-                actual_event_total = np.concatenate([actual_event_total,actual_event],axis=0)
-                predict_event_total = np.concatenate([predict_event_total,predict_event],axis=0)
-                wav_name_total = np.concatenate([wav_name_total,wav_name_array],axis=0)
+            df_representation.to_csv(event_dir+model_event_name+'_event_representation_result_'+str(i)+'_noisefactor_'+str(noise_factor)+'.csv')
+            matrix, actual_event,predict_event,wav_name_array= evaluation.evaluationMatrix(df_representation,classification_type,event_list,random_int,opt)
+            matrix_total=pd.concat([matrix_total,matrix],axis=0)
+            actual_event_total = np.concatenate([actual_event_total,actual_event],axis=0)
+            predict_event_total = np.concatenate([predict_event_total,predict_event],axis=0)
+            wav_name_total = np.concatenate([wav_name_total,wav_name_array],axis=0)
+            '''
             except Exception as e:
                 print(e)
                 pass
+            '''
         elif classification_type=='environment':
             df_representation = infer.env_sounds(envnt_list,wav_list,df_representation,model_environment)
             df_representation.to_csv(env_dir+model_environment_name+'_env_representation_result_'+str(i)+'_noisefactor_'+str(noise_factor)+'.csv')
-        elif classification_type=='both':
-            df_representation = infer.event_sounds(event_list,df_representation,model_event)
-            df_representation.to_csv(event_dir+model_event_name+'_event_representation_result_'+str(i)+'_noisefactor_'+str(noise_factor)+'.csv')
-            try:
-                matrix, actual_event,predict_event,wav_name_array= evaluation.evaluationMatrix(df_representation,classification_type,event,random_int,opt)
-                matrix_total=pd.concat([matrix_total,matrix],axis=0)
-                actual_event_total = np.concatenate([actual_event_total,actual_event],axis=0)
-                predict_event_total = np.concatenate([predict_event_total,predict_event],axis=0)
-                wav_name_total = np.concatenate([wav_name_total,wav_name_array],axis=0)
+            matrix, actual_event,predict_event,wav_name_array= evaluation.evaluationMatrix(df_representation,classification_type,event_list,random_int,opt)
+            matrix_total=pd.concat([matrix_total,matrix],axis=0)
+            actual_event_total = np.concatenate([actual_event_total,actual_event],axis=0)
+            predict_event_total = np.concatenate([predict_event_total,predict_event],axis=0)
+            wav_name_total = np.concatenate([wav_name_total,wav_name_array],axis=0)
+            '''
             except Exception as e:
                 print(e)
                 pass
+            '''
+        elif classification_type=='both':
+            df_representation = infer.event_sounds(event_list,df_representation,model_event)
+            df_representation.to_csv(event_dir+model_event_name+'_event_representation_result_'+str(i)+'_noisefactor_'+str(noise_factor)+'.csv')
+
+            matrix, actual_event,predict_event,wav_name_array= evaluation.evaluationMatrix(df_representation,'event',event_list,random_int,opt)
+            matrix_total=pd.concat([matrix_total,matrix],axis=0)
+            actual_event_total = np.concatenate([actual_event_total,actual_event],axis=0)
+            predict_event_total = np.concatenate([predict_event_total,predict_event],axis=0)
+            wav_name_total = np.concatenate([wav_name_total,wav_name_array],axis=0)
+            '''
+            except Exception as e:
+                print(e)
+                pass
+            '''
             df_representation = infer.env_sounds(envnt_list,wav_list,df_representation,model_environment)
             df_representation.to_csv(env_dir+model_environment_name+'_env_representation_result_'+str(i)+'_noisefactor_'+str(noise_factor)+'.csv')
+            matrix, actual_event,predict_event,wav_name_array= evaluation.evaluationMatrix(df_representation,'environment',event_list,random_int,opt)
+            matrix_total=pd.concat([matrix_total,matrix],axis=0)
+            actual_event_total = np.concatenate([actual_event_total,actual_event],axis=0)
+            predict_event_total = np.concatenate([predict_event_total,predict_event],axis=0)
+            wav_name_total = np.concatenate([wav_name_total,wav_name_array],axis=0)
+            '''
+            except Exception as e:
+                print(e)
+                pass
+            '''
         i+=1
 
     
-    
-    matrix_total.to_csv(output_dir+model_event_name+'_matrix_total_'+event+'_'+timesequence+'.csv')
+    matrix_total.to_csv(output_dir+model_event_name+'_matrix_total_'+timesequence+'.csv')
 
     output = pd.DataFrame()
     output['classification_type']=classification_type
     output['wav_name']=wav_name_total
     output['actual_event']=actual_event_total
     output['predict_event']=predict_event_total
-    output.to_csv(output_dir+'output_'+event+'_'+timesequence+'.csv')
+    output.to_csv(output_dir+'output_'+timesequence+'.csv')
     end = datetime.now()
     print(start,end)
     #fig = evaluation.visualize(matrix_total,actual_event_total,predict_event_total,event,'event',opt)
