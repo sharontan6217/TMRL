@@ -40,20 +40,20 @@ def evaluationMatrix(df_representation,classification_type,event_list,random_int
     df_representation['target_event']=''
 
     files = set(df_representation['wav_name'])
-    print(files)
+    #print(files)
     
     df_event=pd.DataFrame()
     if classification_type=='event':
         df_representation=df_representation.drop('index',axis=1)
         for file in files:
-            print(file)
+            #print(file)
             df_event_predict = df_representation[df_representation['wav_name']==file].reset_index()
             for target_event in event_list:
                 if target_event in file:
                     df_event_predict['target_event']=target_event
             predicted_events = set( df_event_predict['event_predict'])
-            df_event_predict.to_csv('predict_'+file+'.csv')
-            print(file,predicted_events)
+            #df_event_predict.to_csv('predict_'+file+'.csv')
+            #print(file,predicted_events)
             df_event_predict['event_present_predict']=False
             for i in range(len(df_event_predict)):
                 #print(df_event_predict['event_present'][i],df_event_predict['target_event'][i],df_event_predict['event_predict'].values)
@@ -61,13 +61,13 @@ def evaluationMatrix(df_representation,classification_type,event_list,random_int
                     df_event_predict['event_present_predict'][i]=True
 
             df_event=pd.concat((df_event,df_event_predict),axis=0).drop('index',axis=1)
-        df_event.to_csv('result.csv')
+        #df_event.to_csv('result.csv')
         df_event_result = df_event[['wav_name','event_present','event_present_predict','event_actual']]
         df_event_result = df_event_result.drop_duplicates()
         df_event_result = df_event_result.reset_index()
         wav_name_array = df_event_result['wav_name']
         event_array  = df_event_result['event_actual']
-        print(df_event_result)
+        #print(df_event_result)
         actual_event = [] 
         predict_event = []
         for i in range(len(df_event_result)):
