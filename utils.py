@@ -23,6 +23,8 @@ class utils():
         print(meta_path)
         
         files = glob.glob('./sound_datasets/rare_sound_event/meta'+'/*.yaml')
+        #print(files)
+
         annotation_string = []
         bg_classname=[]
         bg_path=[]
@@ -79,8 +81,7 @@ class utils():
         #similarity_score = np.dot(encoding1,encoding2)/(np.linalg.norm(encoding1)*np.linalg.norm(encoding2))
         similarity_score = model_similarity.similarity(encoding1,encoding2)
         return similarity_score
-    def computeDuration(classification_type,df_meta,pretrain_meta,event):
-        print(df_meta['event_length'])
+    def computeDuration(classification_type,pretrain_meta,event):
         min_duration_babycry, min_duration_gunshot, min_duration_glassbreak, min_duration_others=utils.config()
         if classification_type=='event' or classification_type=='both':
             if event=='gunshot':
@@ -219,7 +220,8 @@ class utils():
                         env.append(env_item[j])
                         score.append(freq_selected*similarity_env[j])
                         wav_names.append(wav)
-        
+        #print(env)
+        #print(score)           
         df_filtering_weighted = pd.DataFrame()
         df_filtering_weighted['env_items']=env
         df_filtering_weighted['scores']=score
@@ -238,7 +240,9 @@ class utils():
         df_filtering_weighted_transform=df_filtering_weighted_transform[df_filtering_weighted_transform['rank']<=k]
         return df_filtering_weighted_transform
     def envExtract(df,wav,model_similarity_envrn,envnt_list,k):
-
+        #ipca clustering and define
+        print(df.columns)
+        #df=df.drop(['index'],axis=1)
         df=df.reset_index()
         env_extracted=[]
         score_extracted=[]
@@ -254,12 +258,12 @@ class utils():
             classes_ = utils.dataClean(classes_)
             env = utils.dataClean(env)
             similarity_env=utils.similarity(classes_,env,model_similarity_envrn)
-
+            #print(len(classes_),len(env))
             if similarity_env>0.1:
                 env_extracted.append(env)
                 score_extracted.append(similarity_env)
                 class_extracted.append(classes_)
-
+            #print(env_extracted,score_extracted)
             df_level1 = pd.DataFrame()
             df_level1['env_items']=env_extracted
             df_level1['scores']=score_extracted            
