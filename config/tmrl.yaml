@@ -14,7 +14,7 @@ data:
     min_duration_gunshot: 64000
     min_duration_glassbreak: 64000
     min_duration_babycry: 64000
-    min_duration_others: 48000
+    min_duration_others: 64000
     number_of_top_classes: 20
     hop: 1
     

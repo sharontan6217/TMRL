@@ -40,12 +40,12 @@ import argparse
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_dir',type=str,default='./sound_datasets/rare_sound_event/eval/audio/', help = 'directory of the original data.' ) 
-    #parser.add_argument('--data_dir',type=str,default='./sound_datasets/data/eval21/', help = 'directory of the original data.' ) 
+    #parser.add_argument('--data_dir',type=str,default='./sound_datasets/data/eval21/ground_truth', help = 'directory of the original data.' ) 
     #parser.add_argument('--data_dir',type=str,default='./sound_datasets/TAU Urban Acoustic Scenes/TAU-urban-acoustic-scenes-2020-mobile-development/audio/', help = 'directory of the original data.' ) 
     parser.add_argument('--pretrained_m2d',type=str,default='m2d_clap_vit_base-80x1001p16x16-240128_AS-FT_enconly/weights_ep67it3124-0.48558.pth', help = 'directory of the pretrained m2d model.' ) 
     #parser.add_argument('--pretrained_m2d',type=str,default='m2d_vit_base-80x1001p16x16-221006-mr7_as_46ab246d/weights_ep69it3124-0.47929.pth', help = 'directory of the pretrained m2d model.' ) 
     parser.add_argument('--graph_dir',type=str,default='./graph/event/', help = 'directory of graphs.' )
-    parser.add_argument('--output_dir',type=str,default='./output/event/', help = 'directory of outputs for AEC and ASC task.')
+    parser.add_argument('--output_dir',type=str,default='./output/eventd/', help = 'directory of outputs for AEC and ASC task.')
     parser.add_argument('--log_dir',type=str,default='./log/event/', help = 'directory of the transaction logs.')
     parser.add_argument('--noise_factor',type=float,default=0, help = 'noise to be added to original files for experiments')
     parser.add_argument('--classification_type',type=str,default='event', help = 'three options: event, environment, or both')
@@ -64,7 +64,7 @@ class experiment():
     def run(files_per_batch,meta_path,model_event,model_environment,model_m2d,envnt_list,event_list):
 
 
-
+        classification_type = opt.classification_type
         #df_envnt = df_envnt.sort_values(by='wav_name',ascending=True)
         #df_envnt = df_envnt.reset_index()
         df_representation_environ = pd.DataFrame() 
@@ -96,8 +96,6 @@ class experiment():
                     top_classes, top_values, secs, sub_representation=tagging.show_topk_sliding_window(class_dir, sr, duration,min_duration,target_sr,lower_db,higher_db,model_m2d, fn, opt, k, hop)
                     #top_classes, top_values, secs, sub_representation=tagging.show_topk_for_all_frames(class_dir, sr, duration,min_duration,target_sr,lower_db,higher_db,model_m2d, fn, opt, k)
                     df_representation_tagging = pd.concat([df_representation_tagging,sub_representation],axis=0,ignore_index=True )
-                    wav_list.append(fn_)
-                    j+=1
             i+=1
 
         print(df_representation_tagging)
@@ -114,7 +112,7 @@ class experiment():
         print(meta)
         print(meta.columns)
 
-        classification_type = opt.classification_type
+
         
         df_meta=pd.DataFrame()
         for envnt in envnt_list:
@@ -155,6 +153,34 @@ class experiment():
     def run_desed(files_per_batch,meta_path,model_event,model_environment,model_m2d,envnt_list,event_list):
 
         classification_type = opt.classification_type
+        audios = list(Path(data_dir).glob('*.wav'))
+        df_representation_environ = pd.DataFrame() 
+        df_representation_event = pd.DataFrame()
+        df_representation_tagging=pd.DataFrame()
+        wav_list =[]
+        for i in range(files_per_batch):
+
+            random_int = random.randint(0,len(audios)-2)
+            audio = audios[random_int:random_int+1]
+            files = [*audio]
+            print(files)
+            #for i in range(len(df_meta)):   
+            for fn in files:
+                fn_ = str(fn).split('/')[-1]
+                print(fn_)
+                for target_event in event_list:
+                    sr,  target_sr ,lower_db ,higher_db ,k ,hop, class_dir = tagging.config()
+                    duration, min_duration = utils.computeDuration(classification_type,pretrain_meta,target_event)
+                    top_classes, top_values, secs, sub_representation=tagging.show_topk_sliding_window(class_dir, sr, duration,min_duration,target_sr,lower_db,higher_db,model_m2d, fn, opt, k, hop)
+                    #top_classes, top_values, secs, sub_representation=tagging.show_topk_for_all_frames(class_dir, sr, duration,min_duration,target_sr,lower_db,higher_db,model_m2d, fn, opt, k)
+                    df_representation_tagging = pd.concat([df_representation_tagging,sub_representation],axis=0,ignore_index=True )
+                    wav_list.append(fn_)
+            i+=1
+
+        #print('merged original data is: ',df_representation)
+        df_representation_tagging.to_csv(output_dir+model_event_name+'_representation_orig_'+timesequence+'_'+str(random_int)+'_'+str(i)+'.csv')
+        #df_representation = infer.env_sounds_simple(envnt_list,wav_list,df_representation,model_environment)
+        #df_representation = infer.env_sounds(envnt_list,wav_list,df_representation,model_environment)
         if classification_type == 'event':
             df_meta= pd.read_csv(meta_path+'/meta_events.csv')
         elif  classification_type == 'environment':
@@ -172,45 +198,21 @@ class experiment():
         #actual_event_total=np.array([])
         #predict_event_total=np.array([])
         #wav_name_total = np.array([])
-        df_representation_environ = pd.DataFrame() 
-        df_representation_event = pd.DataFrame()
-        df_representation_tagging=pd.DataFrame()
-        wav_list =[]
-        for i in range(files_per_batch):
-
-            random_int = random.randint(0,len(df_meta)-1)
-            
-            topk_=[]
-            
-            #for i in range(len(df_meta)):   
-            fn= df_meta['mixture_audio_filename'][random_int]
-            fn_ = str(fn).split('/')[-1]
-            print(fn)
-            for event in event_list:
-                sr,  target_sr ,lower_db ,higher_db ,k ,hop, class_dir = tagging.config()
-                duration, min_duration = utils.computeDuration(classification_type,df_meta,event)
-                top_classes, top_values, secs, sub_representation=tagging.show_topk_sliding_window(class_dir, sr, duration,min_duration,target_sr,lower_db,higher_db,model_m2d, fn, opt, k, hop)
-                #top_classes, top_values, secs, sub_representation=tagging.show_topk_for_all_frames(class_dir, sr, duration,min_duration,target_sr,lower_db,higher_db,model_m2d, fn, opt, k)
-                df_representation_tagging = pd.concat([df_representation_tagging,sub_representation],axis=0,ignore_index=True )
-                wav_list.append(fn_)
-                i+=1
-        df_representation_tagging = df_representation_tagging.merge(df_meta,how='left',on=['wav_name'],suffixes=('','_'+str('subclass')))
-        df_representation_tagging = df_representation_tagging.reset_index()
-
-        #print('merged original data is: ',df_representation)
-        df_representation_tagging.to_csv(output_dir+model_event_name+'_representation_orig_'+timesequence+'_'+str(random_int)+'_'+str(i)+'.csv')
-        #df_representation = infer.env_sounds_simple(envnt_list,wav_list,df_representation,model_environment)
-        #df_representation = infer.env_sounds(envnt_list,wav_list,df_representation,model_environment)
-
             
         if classification_type=='event':
             df_representation_event = infer.event_sounds(event_list,df_representation_tagging,model_event)
-            df_representation_event.to_csv(event_dir+model_event_name+'_event_representation_result_'+timesequence+'_'+str(random_int)+'_'+str(i)+'_noisefactor_'+str(noise_factor)+'.csv')                
+               
+            df_representation_event = df_representation_event.merge(df_meta,how='left',on=['wav_name'],suffixes=('','_'+str('subclass')))
+            df_representation_event = df_representation_event.reset_index()
+            df_representation_event.to_csv(event_dir+model_event_name+'_event_representation_result_'+timesequence+'_'+str(random_int)+'_'+str(i)+'_noisefactor_'+str(noise_factor)+'.csv') 
             matrix_total, actual_event_total,predict_event_total,wav_name_total= evaluation.evaluationMatrix(df_representation_event,classification_type,event_list,random_int,opt)
 
         elif classification_type=='environment':
             number_of_predicted_environments = infer.config()
             df_representation_environ = infer.env_sounds(envnt_list,wav_list,df_representation_tagging,model_environment,number_of_predicted_environments)
+
+            df_representation_environ = df_representation_environ.merge(df_meta,how='left',on=['wav_name'],suffixes=('','_'+str('subclass')))
+            df_representation_environ = df_representation_environ.reset_index()
             df_representation_environ.to_csv(env_dir+model_environment_name+'_env_representation_result_'+timesequence+'_'+str(random_int)+'_'+str(i)+'_noisefactor_'+str(noise_factor)+'.csv')
             matrix_total, actual_event_total,predict_event_total,wav_name_total= evaluation.evaluationMatrix(df_representation_environ,classification_type,event_list,random_int,opt)
 
@@ -219,8 +221,12 @@ class experiment():
             df_representation_event.to_csv(event_dir+model_event_name+'_event_representation_result_'+timesequence+'_'+str(random_int)+'_'+str(i)+'_noisefactor_'+str(noise_factor)+'.csv')
             df_representation_environ = infer.env_sounds(envnt_list,wav_list,df_representation_tagging,model_environment)
             df_representation_environ.to_csv(env_dir+model_environment_name+'_env_representation_result_'+timesequence+'_'+str(random_int)+'_'+str(i)+'_noisefactor_'+str(noise_factor)+'.csv')
-            df_representation = df_representation_event.merge(df_representation_environ,how='outer',on='wav_name')
 
+            
+            df_representation = df_representation_event.merge(df_representation_environ,how='outer',on='wav_name')
+            df_representation = df_representation.merge(df_meta,how='left',on=['wav_name'],suffixes=('','_'+str('subclass')))
+            df_representation = df_representation.reset_index()
+            df_representation_environ.to_csv(env_dir+model_environment_name+'_both_representation_result_'+timesequence+'_'+str(random_int)+'_'+str(i)+'_noisefactor_'+str(noise_factor)+'.csv')
             matrix_total, actual_event_total,predict_event_total,wav_name_total= evaluation.evaluationMatrix(df_representation,classification_type,event_list,random_int,opt)
 
         #time.sleep(10)
