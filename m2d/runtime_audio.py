@@ -9,6 +9,7 @@ from pathlib import Path
 import re
 
 import torch
+import yaml
 import torch.nn as nn
 from timm.models.layers import trunc_normal_
 from einops import rearrange
@@ -19,20 +20,23 @@ from .timm_layers_pos_embed import resample_abs_pos_embed
 
 
 class Config:
-    weight_file = ''
-    feature_d = 768 * 5
-    norm_type = all
-    pooling_type = 'mean'
-
-    model = ''
-    input_size = [80, 208]
-    patch_size = [16, 16]
-    sr = '16k'
-    training_mask = 0.0
-    flat_features = False
-    encoder_only = True  # For using in fine-tuning
-    dur_frames = None    # None for no desired number of frames
-    freeze_embed = None  # Set True if freezing PatchEmbed during fine-tuning [2211.09359] How to Fine-Tune Vision Models with SGD
+    with open ('config/tmrl.yaml','r') as f:
+        config_tag = yaml.safe_load(f)
+        feature_d = config_tag['model_tagging']['feature_d']
+        norm_type = config_tag['model_tagging']['norm_type']
+        pooling_type  = config_tag['model_tagging']['pooling_type']
+        weight_file  = config_tag['model_tagging']['weight_file']
+        model  = config_tag['model_tagging']['model']
+        input_size = config_tag['model_tagging']['input_size']
+        patch_size = config_tag['model_tagging']['patch_size']
+        query_net  = config_tag['model_tagging']['query_net']
+        model_type  = config_tag['model_tagging']['sr']
+        sr = config_tag['model_tagging']['model']
+        training_mask = config_tag['model_tagging']['training_mask']
+        flat_features = config_tag['model_tagging']['flat_features']
+        encoder_only = config_tag['model_tagging']['encoder_only']
+        dur_frames = config_tag['model_tagging']['dur_frames']
+        freeze_embed = config_tag['model_tagging']['freeze_embed']
 
 
 def parse_sizes_by_name(name):

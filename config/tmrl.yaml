@@ -1,0 +1,49 @@
+---
+task_name: Tagging
+
+data:
+    metafiles: './sound_datasets/rare_sound_event/meta'
+    #metafiles: './sound_datasets/data/meta'
+    #metafiles: './sound_datasets/TAU Urban Acoustic Scenes/meta'
+    class_dir: 'class_labels_indices.csv'
+    sample_rate: 44100
+    target_rate: 16000
+    loudness_norm:
+        lower_db: -1.0
+        higher_db: 1.0
+    min_duration_gunshot: 64000
+    min_duration_glassbreak: 64000
+    min_duration_babycry: 64000
+    min_duration_others: 48000
+    number_of_top_classes: 20
+    hop: 1
+    
+
+model_tagging:
+    feature_d : 768 * 5
+    norm_type: all
+    pooling_type: 'mean'
+    query_net: CLAP
+    model_type: M2D
+    input_size: [80, 208]
+    patch_size: [16, 16]
+    flat_features: False
+    weight_file: ''
+    model: ''
+    input_size: [80, 208]
+    patch_size: [16, 16]
+    sr: '16k'
+    training_mask: 0.0
+    flat_features: False
+    encoder_only: True  # For using in fine-tuning
+    dur_frames: None    # None for no desired number of frames
+    freeze_embed: None  # Set True if freezing PatchEmbed during fine-tuning [2211.09359] How to Fine-Tune Vision Models with SGD
+
+
+model_infer:
+    model_event_name: 'all-mpnet-base-v2'
+    model_environment_name: 'all-mpnet-base-v2'
+    number_of_predicted_environments: 5
+
+train:
+    files_per_batch: 1

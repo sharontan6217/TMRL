@@ -5,6 +5,8 @@ This code is based on "[Masked Modeling Duo (M2D) & M2D-CLAP](https://github.com
 Data:
 1. ["TUT Rare sound events, Development dataset](https://doi.org/10.5281/zenodo.603106)".
 2. ["TUT Rare sound events, Evaluation dataset](https://doi.org/10.5281/zenodo.1160454)".
+3. ["Domestic Environment Sound Event Detection Dataset](https://github.com/turpaultn/DCASE2019_task4/)".
+4. ["TAU Urban Acoustic Scenes Dataset](https://zenodo.org/records/3685828)".
 
 These publicly available implementations and open data for the experiments are sincerely appreciated.
 

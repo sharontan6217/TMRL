@@ -11,6 +11,7 @@ sentence_transformers
 IPython
 textwrap
 scipy
+libauc
 fire
 tqdm
 scikit-learn

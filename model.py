@@ -12,8 +12,10 @@ import utils
 from portable_m2d import PortableM2D
 import pandas as pd
 import numpy as np
-import random
-import gc
+import yaml
+import time
+
+
 
 from scipy import fft
 from scipy.io import wavfile
@@ -26,22 +28,39 @@ import datetime
 from datetime import datetime
 import utils
 from utils import utils
-
+import gc
 gc.collect()
 
 
 
 
 class tagging():
-    def show_topk_sliding_window(classes,  duration,min_duration,target_sr,m2d, wav_file,opt, k=20, hop=1):
+    def config():
+        with open ('config/tmrl.yaml','r') as f:
+            config_tag = yaml.safe_load(f)
+        sr = config_tag['data']['sample_rate']
+        min_duration_babycry = config_tag['data']['min_duration_babycry']
+        min_duration_gunshot = config_tag['data']['min_duration_gunshot']
+        min_duration_glassbreak = config_tag['data']['min_duration_glassbreak']
+        min_duration_others = config_tag['data']['min_duration_others']
+        target_sr = config_tag['data']['target_rate']
+        lower_db = config_tag['data']['loudness_norm']['lower_db']
+        higher_db = config_tag['data']['loudness_norm']['higher_db']
+        k = config_tag['data']['number_of_top_classes']
+        hop = config_tag['data']['hop']
+        class_dir = config_tag['data']['class_dir']
+        return sr,  target_sr ,lower_db ,higher_db ,k ,hop, class_dir
+    def show_topk_sliding_window(class_dir, sr, duration,min_duration,target_sr,lower_db,higher_db,m2d, wav_file,opt, k, hop):
         #64000-2,64000-4,16000
         #print(wav_file)
+        classes = pd.read_csv('class_labels_indices.csv').sort_values('mid').reset_index()
+        print(classes)
         noise_factor = opt.noise_factor
         print(m2d.cfg.sample_rate)
         gc.collect()
-        wav, sr = librosa.load(wav_file, mono=True, sr=44100)      
+        wav, sr = librosa.load(wav_file, mono=True, sr=sr)      
         average_wav = np.median(wav)  
-        noise = np.random.uniform(low=-1.0, high=1.0, size=len(wav))*average_wav*noise_factor
+        noise = np.random.uniform(low=lower_db, high=higher_db, size=len(wav))*average_wav*noise_factor
         #print(wav)
         #print(noise.shape)
         wav = (wav+noise).astype(np.float32)
@@ -98,17 +117,18 @@ class tagging():
         
         return top_classes, top_values, secs, sub_representation
     
-    def show_topk_for_all_frames(classes,  duration,min_duration,target_sr,m2d, wav_file, opt, k=20):
+    def show_topk_for_all_frames(class_dir, sr, duration,min_duration,target_sr,lower_db,higher_db,m2d, wav_file, opt, k):
         #print(wav_file)
         print(m2d.cfg.sample_rate)
+        classes = pd.read_csv('class_labels_indices.csv').sort_values('mid').reset_index()
         # Loads and shows an audio clip.
-        wav, sr = librosa.load(wav_file, mono=True, sr=44100)      
+        wav, sr = librosa.load(wav_file, mono=True, sr=sr)      
         noise_factor = opt.noise_factor
         print(m2d.cfg.sample_rate)
         average_wav = np.median(wav)  
-        noise = np.random.uniform(low=-1.0, high=1.0, size=len(wav))*average_wav*noise_factor
-        #print(wav)
-        #print(noise.shape)
+        noise = np.random.uniform(low=lower_db, high=higher_db, size=len(wav))*average_wav*noise_factor
+        print(wav)
+        print(noise.shape)
         wav = (wav+noise).astype(np.float32)
         wav = librosa.resample(wav, orig_sr=sr, target_sr=target_sr)
         display(Audio(wav, rate=m2d.cfg.sample_rate))
@@ -120,6 +140,7 @@ class tagging():
             probs_per_chunk = logits_per_chunk.squeeze(0).softmax(-1)  # logits [1, 62, 527] -> probabilities [62, 527]
             timestamps = timestamps[0]  # [1, 62] -> [62]
         # Shows the top-k prediction results.
+        print(timestamps)
         time_frame=[]
         top_classes=[]
         top_values=[]
@@ -127,7 +148,15 @@ class tagging():
         sub_representation = pd.DataFrame()
         for i, (probs, ts) in enumerate(zip(probs_per_chunk, timestamps)):
             topk_values, topk_indices = probs.topk(k=k)
-            top_classes = [classes.loc[i].display_name for i, v in zip(topk_indices.numpy(), topk_values.numpy())if v>1]
+            print(topk_values,topk_indices)
+            for i, v in zip(topk_indices.numpy(), topk_values.numpy()):
+                if v>1:
+                    #print (i,v)
+                    #print(classes.loc[i].display_name)
+                    top_classes=[classes.loc[i].display_name]
+                    #print(top_classes)
+            
+            #top_classes = [classes.loc[i].display_name for i, v in zip(topk_indices.numpy(), topk_values.numpy())if v>1]
             print('top_classes are: ',top_classes)
             sec = f'{ts/1000:.1f}s '
             print(sec, ', '.join([f'{classes.loc[i].display_name} ({v*100:.1f}%)' for i, v in zip(topk_indices.numpy(), topk_values.numpy()) if v>1]))
@@ -139,7 +168,7 @@ class tagging():
 
         
         #print(top_classes)
-        wav_name = str(wav_file).split('\\')[-1]
+        wav_name = str(wav_file).split('/')[-1]
         
         sub_representation['time_frame']=secs
         sub_representation['classes']=top_classes
@@ -147,7 +176,7 @@ class tagging():
         sub_representation['wav_name']=wav_name
         
         sub_representation['time_frame_int']=sub_representation['time_frame'].str.replace('s','')
-        sub_representation['time_frame_int']=sub_representation['time_frame_int'].astype(int)
+        sub_representation['time_frame_int']=sub_representation['time_frame_int'].astype(float)
         sub_representation = sub_representation.sort_values(by='time_frame_int').reset_index()
         sub_representation = sub_representation[['wav_name','time_frame','classes','values']]
         
@@ -155,9 +184,15 @@ class tagging():
         
         return top_classes, top_values, secs, sub_representation
 class infer():
-    def env_sounds_simple(envnt_list,wav_list,df_representation,model_environment,k=5):
+    def config():
+        with open ('config/tmrl.yaml','r') as f:
+            config_infer = yaml.safe_load(f)
+        number_of_predicted_environments = config_infer['model_infer']['number_of_predicted_environments']
+        return number_of_predicted_environments
+    def env_sounds_simple(envnt_list,wav_list,df_representation,model_environment,k):
         #print(wav_list)
         gc.collect()
+        #df_representation['wav_name_simple']=df_representation['wav_name'].str.split('/').str[1]
         df_subclass = pd.DataFrame()
         df_subclass['wav_name']=wav_list
         df_subclass['environments_selected']=''
@@ -183,22 +218,27 @@ class infer():
             selected_classes = np.array(df_sound_total['environments_predict'][:k])
             df_subclass['environments_selected'][i]=selected_classes
 
-        df_representation = df_representation.merge(df_subclass,how='left',on=['wav_name'],suffixes=('','_'+str('subclass')))
+        df_representation = df_representation.merge(df_subclass,how='inner',on=['wav_name'],suffixes=('','_'+str('subclass')))
 
         
         
         return df_representation
-    def env_sounds(envnt_list,wav_list,df_representation,model_environment,k=5    ):
+    def env_sounds(envnt_list,wav_list,df_representation,model_environment,k ):
 
         gc.collect()
-        #print(wav_list)
+        print(wav_list)
+        print(df_representation)
+        print(k)
+        #df_representation['wav_name_simple']=df_representation['wav_name'].str.split('/').str[-1]
+        print(df_representation)
+
         df_subclass = pd.DataFrame()
         for wav in wav_list:
             df_wav = df_representation[(df_representation['wav_name']==wav)&(df_representation['classes']!='Silence')]
-            #print(df_wav)
+            print(df_wav)
             sound_wav = df_wav['classes']
             s,v = np.unique(sound_wav,return_counts=True)
-            #print(s,v)
+            print(s,v)
             df_sound = pd.DataFrame()
             df_sound['classes']=s
             df_sound['frequency']=v
@@ -206,7 +246,7 @@ class infer():
             df_sound['frequency'] = df_sound['frequency'].astype(float)
             df_sound['similarity_classes']=''
             df_sound['classes_level0']=''
-            for n in range(len(df_sound)-1):
+            for n in range(len(df_sound)):
                 similarity_classes=[]
                 classes_level0=[]
                 class_1 = df_sound['classes'][n]
@@ -217,7 +257,7 @@ class infer():
                     frequency_2 = df_sound['frequency'][m]
                     class_2 = df_sound['classes'][m]                
                     similarity_class = utils.similarity(class_1,class_2,model_environment)
-                    #print(n,m,class_1,class_2,similarity_class)
+                    print(n,m,class_1,class_2,similarity_class)
                     if (similarity_class>=0.6 and similarity_class<1)==True:
                         print(n,class_1,class_2,similarity_class)
                         similarity_classes.append(similarity_class)
@@ -227,29 +267,31 @@ class infer():
                 #print('frequency_1 is: ',frequency_1)   
                 df_sound['frequency'][n] = frequency_1            
                 df_sound['classes_level0'][n] = classes_level0
-                df_sound['similarity_classes'][n]=  similarity_classes
+                df_sound['similarity_classes'][n] = similarity_classes
 
             rank = df_sound['frequency'].rank(ascending=False)
             df_sound['rank']=rank
             df_sound['wav_name']=wav
             df_sound = df_sound.sort_values(by='frequency',ascending=False)
             #print(df_sound)
-            df_sound = df_sound[:k]
+            #df_sound = df_sound[:k]
+            df_sound = df_sound[df_sound['rank']<3]
             
             df_subclass = pd.concat([df_subclass,df_sound],axis=0,ignore_index=True)
         df_subclass = df_subclass.reset_index()
-
+        print(df_subclass)
         df_representation = df_representation.merge(df_subclass,how='left',on=['wav_name','classes'],suffixes=('','_'+str('subclass')))
 
-
-        
+        print(df_representation)
+       
         #df_representation = df_representation.drop(['wav_name_subclass','classes_subclass'],axis=1)
         df_representation['environment']=''
         df_representation['similarity_env']=''
+
         for i in range(len(df_representation)):
-            
-            if df_representation['rank'][i]>=0:
+            if df_representation['rank'][i]>0:
                 label = df_representation['classes_level0'][i]
+                print(label)
                 scores=[]
                 environments=[]
                 for environment in envnt_list:
@@ -257,14 +299,28 @@ class infer():
                     environment = utils.dataClean(environment)
                     similarity_score = utils.similarity(label,environment,model_environment)
                     print(i,label,environment,similarity_score)
-                    if similarity_score>0.1:
+                    if similarity_score>=0.1:
                         environments.append(environment)
                         scores.append(similarity_score)
-                    environments_array=np.array(environments)
-                    #print(environments_array)
-                    df_representation['similarity_env'][i]=scores
-                    df_representation['environment'][i]=environments
 
+
+                    environments_array=np.array(environments)
+                    print(environments_array)
+                subenvn = pd.DataFrame()
+                subenvn['env']=environments
+                subenvn['similarity']=scores
+                subenvn=subenvn.sort_values('similarity',ascending=False).reset_index()
+                print(subenvn)
+                #subenvn = subenvn[:10]
+                #rank_similarity =subenvn['similarity'].rank(ascending=False)
+                #subenvn['rank']=rank_similarity
+                #subenvn=subenvn[subenvn['rank']<=k]
+                env_top = subenvn['env'].values
+                scores_top = subenvn['similarity'].values
+                df_representation['similarity_env'][i]=scores_top
+                df_representation['environment'][i]=env_top
+            
+        df_representation.to_csv('enviroment.csv')
         env_top5=[]
         env_items=[]
         scores=[]
@@ -273,13 +329,27 @@ class infer():
         df_subwav=pd.DataFrame()
         
         for wav in wav_list:
+            print(df_representation)
+            print(wav)
             df_wav_total = df_representation[df_representation['wav_name']==wav]
-            df_filtering_simple_transform = utils.envFiltering_simple(df_wav_total,wav)
-            df_filtering_weighted_transform = utils.envFiltering_weighted(df_wav_total,wav)
-            df_level1=utils.envExtract(df_wav_total,wav,envnt_list)
-            env_top5.append(np.array(df_filtering_simple_transform['env_items']))
+            print(df_wav_total)
+            print(wav)
+            df_filtering_simple_transform = utils.envFiltering_simple(df_wav_total,wav,k)
+            df_filtering_weighted_transform = utils.envFiltering_weighted(df_wav_total,wav,k)
+            #df_level1=utils.envExtract(df_wav_total,wav,model_environment,envnt_list,k)
+            rank_highest_1 = min(df_filtering_simple_transform['rank'])
+            rank_highest_2 = min(df_filtering_weighted_transform['rank'])
+            top1_frequency =df_filtering_simple_transform[df_filtering_simple_transform['rank']==rank_highest_1]['env_items'].values
+            top1_weights =  df_filtering_weighted_transform[df_filtering_weighted_transform['rank']==rank_highest_2]['env_items'].values
+            print(top1_weights,top1_frequency)
+            top1 =[]
+            top1.extend(top1_frequency)
+            top1.extend(top1_weights)
+            print(top1)
             env_items.append(np.array(df_filtering_weighted_transform['env_items']))
-            env_items_level1.append(np.array(df_level1['env_items']))
+            env_top5.append(np.array(df_filtering_simple_transform['env_items']))
+            #env_items_level1.append(np.array(df_level1['env_items']))
+            env_items_level1.append(top1)
             scores.append(np.array(df_filtering_weighted_transform['scores']))
             wavs.append(wav)
             
@@ -291,13 +361,17 @@ class infer():
         df_subwav['env_level1']=env_items_level1
         df_representation = df_representation.merge(df_subwav,how='left',on=['wav_name'])
 
+        print(df_representation)
+        #del df_filtering_simple_transform
+        #del df_filtering_weighted_transform
         
         return df_representation
     def event_sounds(event_list,df_representation,model_event):
+        gc.collect()
         df_representation['event_predict']=''
         df_representation['similarity']=''
         for i in range(len(df_representation)):
-            gc.collect()
+            
             
             label = df_representation['classes'][i]
             for event in event_list:
@@ -305,7 +379,9 @@ class infer():
                 event = utils.dataClean(event)
                 similarity_score = utils.similarity(label,event,model_event)
                 print(i,label,event,similarity_score)
-                if similarity_score>=0.5:
+                if (similarity_score>=0.5 or event.lower() in label.lower())==True:
                     df_representation['event_predict'][i]=event
-                    df_representation['similarity']=similarity_score
+                    df_representation['similarity'][i]=similarity_score
+            #time.sleep(5)
+
         return df_representation
