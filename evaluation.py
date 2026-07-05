@@ -121,6 +121,7 @@ def evaluationMatrix(df_representation,classification_type,event_list,random_int
     matrix['random_int']=random_int
     matrix['classification_type']=classification_type
     
+    #matrix['files_per_batch']=files_per_batch
     if (classification_type=='event'or classification_type=='both')==True:
         eventScore=math.sqrt(mean_squared_error(actual,predict)) 
         print('Train Score: %.5f RMSE' % (eventScore))
@@ -181,6 +182,9 @@ def evaluationMatrix(df_representation,classification_type,event_list,random_int
         matrix['accuracy_score_top5']=accuracy_score_top5
         matrix['accuracy_score_level1']=accuracy_score_level1
         matrix['environments']=[env_array]
+    #matrix.to_csv(log_dir+'mpnet_'+str(random_int)+'_'+classification_type+'.csv')
+
+        
 
     return matrix, actual,predict,wav_name_array
     

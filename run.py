@@ -40,7 +40,7 @@ import argparse
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_dir',type=str,default='./sound_datasets/rare_sound_event/eval/audio/', help = 'directory of the original data.' ) 
-    #parser.add_argument('--data_dir',type=str,default='./sound_datasets/desed/eval21/', help = 'directory of the original data.' ) 
+    #parser.add_argument('--data_dir',type=str,default='./sound_datasets/data/eval21/', help = 'directory of the original data.' ) 
     #parser.add_argument('--data_dir',type=str,default='./sound_datasets/TAU Urban Acoustic Scenes/TAU-urban-acoustic-scenes-2020-mobile-development/audio/', help = 'directory of the original data.' ) 
     parser.add_argument('--pretrained_m2d',type=str,default='m2d_clap_vit_base-80x1001p16x16-240128_AS-FT_enconly/weights_ep67it3124-0.48558.pth', help = 'directory of the pretrained m2d model.' ) 
     #parser.add_argument('--pretrained_m2d',type=str,default='m2d_vit_base-80x1001p16x16-221006-mr7_as_46ab246d/weights_ep69it3124-0.47929.pth', help = 'directory of the pretrained m2d model.' ) 
@@ -75,19 +75,24 @@ class experiment():
             df_meta_event = df_meta[df_meta['bg_classname'] == envnt]
             df_envnt = pd.concat([df_envnt,df_meta_event],axis=0,ignore_index=True)
 
+        #df_envnt = df_envnt.sort_values(by='wav_name',ascending=True)
+        #df_envnt = df_envnt.reset_index()
         df_representation_environ = pd.DataFrame() 
         df_representation_event = pd.DataFrame()
         df_representation_tagging=pd.DataFrame()
-
+        #matrix_total=pd.DataFrame()
+        #actual_event_total=np.array([])
+        #predict_event_total=np.array([])
+        #wav_name_total = np.array([])
         wav_list =[]
         for i in range(files_per_batch):
             random_int = random.randrange(0,150)
             #random_int = 1
-            #files_babycry = list(Path(data_dir+'babycry').glob('*.wav'))[random_int:random_int+1]
-            #files_gunshot = list(Path(data_dir+'gunshot').glob('*.wav'))[random_int:random_int+1]
+            files_babycry = list(Path(data_dir+'babycry').glob('*.wav'))[random_int:random_int+1]
+            files_gunshot = list(Path(data_dir+'gunshot').glob('*.wav'))[random_int:random_int+1]
             files_glassbreak = list(Path(data_dir+'glassbreak').glob('*.wav'))[random_int:random_int+1]
-            #files = [*files_babycry,*files_glassbreak,*files_gunshot]
-            files = [*files_glassbreak]
+            files = [*files_babycry,*files_glassbreak,*files_gunshot]
+            #files = [*files_glassbreak]
 
             print(files)
             
@@ -140,6 +145,7 @@ class experiment():
             matrix_total, actual_event_total,predict_event_total,wav_name_total= evaluation.evaluationMatrix(df_representation,classification_type,event_list,random_int,opt)
 
 
+        #matrix_total=pd.concat([matrix_total,matrix],axis=0)
 
         return matrix_total,wav_name_total,actual_event_total,predict_event_total
 
@@ -155,10 +161,14 @@ class experiment():
         df_meta['mixture_audio_filename'] = data_dir+df_meta['wav_name']
 
 
+        #df_meta = df_meta.sort_values(by='wav_name',ascending=True).reset_index()
 
         print(df_meta)
         print(df_meta.columns)
-
+        #matrix_total=pd.DataFrame()
+        #actual_event_total=np.array([])
+        #predict_event_total=np.array([])
+        #wav_name_total = np.array([])
         df_representation_environ = pd.DataFrame() 
         df_representation_event = pd.DataFrame()
         df_representation_tagging=pd.DataFrame()
@@ -168,7 +178,8 @@ class experiment():
             random_int = random.randint(0,len(df_meta)-1)
             
             topk_=[]
-  
+            
+            #for i in range(len(df_meta)):   
             fn= df_meta['mixture_audio_filename'][random_int]
             fn_ = str(fn).split('/')[-1]
             print(fn)
@@ -209,6 +220,7 @@ class experiment():
 
             matrix_total, actual_event_total,predict_event_total,wav_name_total= evaluation.evaluationMatrix(df_representation,classification_type,event_list,random_int,opt)
 
+        #time.sleep(10)
                     
         return matrix_total,wav_name_total,actual_event_total,predict_event_total
 
@@ -237,11 +249,12 @@ if __name__=="__main__":
     timesequence=str(start)[-6:]
     print(timesequence)
     print(str(datetime.now()))
-    
+    target_events = pd.read_csv('target_events.csv')['target'].values
+    target_environments = pd.read_csv('target_environments.csv')['target'].values
     #event_list=['speech','dog', 'cat', 'alarm bell ringing', 'dishes', 'frying', 'blender', 'running water', 'vacuum cleaner', 'electric shaver toothbrush']
     #event_list=['babycry','gunshot', 'glassbreak']
-    event_list=['glassbreak']
-    envnt_list=['beach','bus','cafe/restaurant','car','city_center','forest_path','grocery_store','home','library','metro_station','office','park','residential_area','train','tram']
+    #event_list=['glassbreak']
+    #envnt_list=['beach','bus','cafe/restaurant','car','city_center','forest_path','grocery_store','home','library','metro_station','office','park','residential_area','train','tram']
     #envnt_list=['airport','indoor shopping mall','metro station','pedestrain street','public square','street with medium level of traffic','travelling by a tram','travelling by a bus','travelling by an underground metro','urban park']
     
     classification_type = opt.classification_type
@@ -259,8 +272,8 @@ if __name__=="__main__":
     model_m2d = PortableM2D(weight_file=model_m2d_path,num_classes=527)
     output=pd.DataFrame()
     for k in range(2):
-        matrix_total,wav_name_total,actual_event_total,predict_event_total = experiment.run(files_per_batch,meta_path,model_event,model_environment,model_m2d,envnt_list,event_list)
-        #matrix_total,wav_name_total,actual_event_total,predict_event_total = experiment.run_desed(files_per_batch,meta_path,model_event,model_environment,model_m2d,envnt_list,event_list)
+        matrix_total,wav_name_total,actual_event_total,predict_event_total = experiment.run(files_per_batch,meta_path,model_event,model_environment,model_m2d,target_environments,target_events)
+        #matrix_total,wav_name_total,actual_event_total,predict_event_total = experiment.run_desed(files_per_batch,meta_path,model_event,model_environment,model_m2d,target_environments,target_events)
         matrix_total.to_csv(output_dir+model_event_name+'_matrix_total_'+str(k)+'_'+timesequence+'.csv')
         if classification_type!='environment':
             output_ = pd.DataFrame()
