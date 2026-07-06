@@ -141,9 +141,10 @@ class experiment():
             matrix_total, actual_event_total,predict_event_total,wav_name_total= evaluation.evaluationMatrix(df_representation_environ,classification_type,event_list,random_int,opt)
 
         elif classification_type=='both':
+            number_of_predicted_environments = infer.config()
             df_representation_event = infer.event_sounds(event_list,df_representation_tagging,model_event)
             df_representation_event.to_csv(event_dir+model_event_name+'_event_representation_result_'+timesequence+'_'+str(random_int)+'_'+str(i)+'_noisefactor_'+str(noise_factor)+'.csv')
-            df_representation_environ = infer.env_sounds(envnt_list,wav_list,df_representation_tagging,model_environment)
+            df_representation_environ = infer.env_sounds(envnt_list,wav_list,df_representation_tagging,model_environment,number_of_predicted_environments)
             df_representation_environ.to_csv(env_dir+model_environment_name+'_env_representation_result_'+timesequence+'_'+str(random_int)+'_'+str(i)+'_noisefactor_'+str(noise_factor)+'.csv')
             df_representation = df_representation_event.merge(df_representation_environ,how='outer',on='wav_name')
             df_meta=pd.DataFrame()
@@ -192,7 +193,7 @@ class experiment():
         #df_representation = infer.env_sounds(envnt_list,wav_list,df_representation,model_environment)
 
 
-
+        
         if classification_type=='event':
             df_representation_event = infer.event_sounds(event_list,df_representation_tagging,model_event)         
             
@@ -227,9 +228,10 @@ class experiment():
             matrix_total, actual_event_total,predict_event_total,wav_name_total= evaluation.evaluationMatrix(df_representation_environ,classification_type,event_list,random_int,opt)
 
         elif classification_type=='both':
+            number_of_predicted_environments = infer.config()
             df_representation_event = infer.event_sounds(event_list,df_representation_tagging,model_event)
             df_representation_event.to_csv(event_dir+model_event_name+'_event_representation_result_'+timesequence+'_'+str(random_int)+'_'+str(i)+'_noisefactor_'+str(noise_factor)+'.csv')
-            df_representation_environ = infer.env_sounds(envnt_list,wav_list,df_representation_tagging,model_environment)
+            df_representation_environ = infer.env_sounds(envnt_list,wav_list,df_representation_tagging,model_environment,number_of_predicted_environments)
             df_representation_environ.to_csv(env_dir+model_environment_name+'_env_representation_result_'+timesequence+'_'+str(random_int)+'_'+str(i)+'_noisefactor_'+str(noise_factor)+'.csv')
 
             
