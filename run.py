@@ -66,15 +66,11 @@ class experiment():
 
 
         classification_type = opt.classification_type
-        #df_envnt = df_envnt.sort_values(by='wav_name',ascending=True)
-        #df_envnt = df_envnt.reset_index()
+
         df_representation_environ = pd.DataFrame() 
         df_representation_event = pd.DataFrame()
         df_representation_tagging=pd.DataFrame()
-        #matrix_total=pd.DataFrame()
-        #actual_event_total=np.array([])
-        #predict_event_total=np.array([])
-        #wav_name_total = np.array([])
+
         wav_list =[]
         for i in range(files_per_batch):
             random_int = random.randrange(0,150)
@@ -174,7 +170,7 @@ class experiment():
             audio = audios[random_int:random_int+1]
             files = [*audio]
             print(files)
-            #for i in range(len(df_meta)):   
+
             for fn in files:
                 fn_ = str(fn).split('/')[-1]
                 print(fn_)
@@ -187,7 +183,7 @@ class experiment():
                     wav_list.append(fn_)
             i+=1
 
-        #print('merged original data is: ',df_representation)
+
         df_representation_tagging.to_csv(output_dir+model_event_name+'_representation_orig_'+timesequence+'_'+str(random_int)+'_'+str(i)+'.csv')
         #df_representation = infer.env_sounds_simple(envnt_list,wav_list,df_representation,model_environment)
         #df_representation = infer.env_sounds(envnt_list,wav_list,df_representation,model_environment)
@@ -249,8 +245,6 @@ class experiment():
             df_representation = df_representation.reset_index()
             df_representation_environ.to_csv(env_dir+model_environment_name+'_both_representation_result_'+timesequence+'_'+str(random_int)+'_'+str(i)+'_noisefactor_'+str(noise_factor)+'.csv')
             matrix_total, actual_event_total,predict_event_total,wav_name_total= evaluation.evaluationMatrix(df_representation,classification_type,event_list,random_int,opt)
-
-        #time.sleep(10)
                     
         return matrix_total,wav_name_total,actual_event_total,predict_event_total
 
