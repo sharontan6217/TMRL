@@ -1,4 +1,4 @@
-This is for "Unsupervised Method of Transformer-based Multimodal Representation Learning for Acoustic Event Classification and Blind Acoustic Scene Classification".
+This is for "Transformer-based Multimodal Representation Learning for Blind Acoustic Classification".
 
 This code is based on "[Masked Modeling Duo (M2D) & M2D-CLAP](https://github.com/nttcslab/m2d)" and "[MPNet](https://github.com/microsoft/MPNet)".
 
